@@ -1,0 +1,116 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+class Particion {
+public:
+    int id;
+    int tamano;
+    bool ocupada;
+    string nombreProceso;
+
+    Particion(int _id, int _tamano) : id(_id), tamano(_tamano), ocupada(false), nombreProceso("") {}
+};
+
+class Proceso {
+public:
+    string nombre;
+    int tamano;
+
+    Proceso(string _nombre, int _tamano) : nombre(_nombre), tamano(_tamano) {}
+};
+
+int main() {
+    vector<Particion> particiones;
+    vector<Proceso> procesos;
+    int memoriaTotal;
+    int num;
+
+    cout << "INGRESA EL NUM TOTAL DE MEMORIA A USAR: ";
+    cin >> memoriaTotal;
+
+    cout << "Ingresa el numero de particiones que requieres: ";
+    cin >> num;
+
+    for (int i = 0; i < num; i++) {
+        int numero;
+        cout << "Espacio de cada particion, el primero es el S.O: ";
+        cin >> numero;
+        Particion nParticion(i, numero);
+        particiones.push_back(nParticion);
+    }
+
+    for (int i = 0; i < particiones.size(); i++) {
+        Particion elemento = particiones[i];
+        cout << "id: " << elemento.id << ", Tamanio: " << elemento.tamano << endl;
+    }
+
+    int num2;
+    string nom;
+    cout << "Ingresa el numero de procesos que requieres: ";
+    cin >> num2;
+
+    for (int j = 0; j < num2; j++) {
+        int numero2;
+        cout << "Espacio de cada proceso, el primero es el S.O: ";
+        cin >> numero2;
+
+        Proceso nProceso(" ", numero2);
+        procesos.push_back(nProceso);
+    }
+
+    for (int j = 0; j < num2; j++) {
+        cout << "Ingrese el nombre de los procesos: ";
+        cin >> nom;
+        procesos[j].nombre = nom;
+    }
+
+    int acumulador = 0;
+
+    for (int i = 0; i < procesos.size(); i++) {
+        Proceso proceso = procesos[i];
+        bool asignado = false;
+
+        for (int j = 0; j < particiones.size(); j++) {
+            Particion &particion = particiones[j];
+            if (!particion.ocupada && particion.tamano >= proceso.tamano) {
+                particion.ocupada = true;
+                particion.nombreProceso = proceso.nombre;
+                asignado = true;
+                cout << proceso.nombre << " asignado a la particion " << particion.id << endl;
+                int memoriaDisponible = particion.tamano - proceso.tamano;
+                acumulador += memoriaDisponible;
+                particion.tamano = proceso.tamano; // Ajustar el tamaño de la partición
+                for (int k = j+1; k < particiones.size(); k++) {
+                  Particion &otraParticion = particiones[k];
+                  if (!otraParticion.ocupada && otraParticion.tamano <= memoriaDisponible) {
+                    otraParticion.ocupada = true;
+                    otraParticion.nombreProceso = "Sobrante";
+                    cout << "Sobrante de " << memoriaDisponible << " asignado a la particion " << otraParticion.id << endl;
+                    acumulador += otraParticion.tamano;
+                    memoriaDisponible -= otraParticion.tamano;
+                    otraParticion.tamano = 0; // La partición tiene tamaño cero después de asignar el sobrante
+                  }
+                }
+                if (memoriaDisponible > 50) {
+                  int nuevaTamano = memoriaDisponible;
+                  Particion nuevaParticion(particiones.size(), nuevaTamano);
+                  particiones.push_back(nuevaParticion);
+//                  cout << "Nueva partición creada con tamaño " << nuevaTamano << endl;
+                  acumulador += nuevaTamano; // Ajuste al acumulador de memoria sobrante
+                }
+                break;
+            }
+        }
+
+        if (!asignado) {
+            cout << proceso.nombre << " No fue asignado a memoria" << endl;
+        }
+    }
+
+    cout << "Tu memoria sobrante es: " << acumulador << endl;
+
+    return 0;
+}
